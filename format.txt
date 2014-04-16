@@ -1,0 +1,18 @@
+We take resumes in this Format
+
+Basic_Details
+(Name)
+(Phone)
+(Email)
+
+other heading1
+1.
+2.
+3.
+
+other heading2
+1.
+2.
+3.
+
+....
