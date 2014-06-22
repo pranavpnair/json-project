@@ -1,6 +1,5 @@
 We take resumes in this Format
 
-Basic_Details
 (Name)
 (Phone)
 (Email)
