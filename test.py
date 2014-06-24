@@ -12,6 +12,8 @@ import string
 import subprocess
 from subprocess import call
 #import pdf2txt
+import fileinput
+from modules import *
 
 w=raw_input()
 if w[-1]=='f':
@@ -23,7 +25,6 @@ elif w[-1]=='c':
 	#pdf2txt.main({w[:-3]+'pdf'})
 else:
 	subprocess.call('cp '+w+' file.txt', shell=True)
-import fileinput
 
 def main():
     pass
@@ -35,146 +36,135 @@ if __name__ == '__main__':
     
 blacklistlines = [1]
     
-fp=open("file.txt","r")
-fp2=open("out.json","w")
-fp2.write('{\n')
-name=fp.readline()
-fp2.write('"Basic Details": {\n')
-fp2.write('\t"Name": "' + name[:-1] + '",\n')
+fInput=open("file.txt","r")
+fOutput=open("out.json","w")
+fOutput.write('{\n')
 
+#Name extraction
+
+line=fInput.readline()
+fOutput.write('"Basic Details": {\n')
+fOutput.write('\t"Name": "' + line[:-1] + '",\n')
+
+
+#Email Extraction
 emailline=1
 emaillist=[]
 
-while 1:
-    line=fp.readline()
+line=fInput.readline()
+while line:
     emailline+=1
-    if not line:
-        break
-    i=0
-    while i!=len(line):
-        if line[i]=='@':
-            break
-        i=i+1
-    if i!=len(line):
-        left=i
-        while line[left]!=' ':
-            left=left-1
-            if left==0:
-                break
-        right=i
-        while line[right]!=' ':
-            right=right+1
-            if right==len(line):
-                break
-         
-        if len(line) >= right-1 and (line[right-1].isalpha() or line[right-1].isdigit()):
-            right +=1
-        
-        email=line[left:right-1]
+    email = extract_email(line)
         emaillist.append(email)
-        #fp2.write('\t{"Email ID": "' + email + '"},\n')
         blacklistlines.append(emailline)
+    line=fInput.readline()
 
 if len(emaillist)>1:
-    fp2.write('\t"Email ID": ["' + '", "'.join(emaillist) + '"],\n')
+    fOutput.write('\t"Email ID": ["' + '", "'.join(emaillist) + '"],\n')
 else:
-    fp2.write('\t"Email ID": "' + '", "'.join(emaillist) + '",\n')
-fp.close()
+    fOutput.write('\t"Email ID": "' + '", "'.join(emaillist) + '",\n')
+fInput.close()
 
-fp=open("file.txt","r")
+
+
+#Phone number extraction
+
+fInput=open("file.txt","r")
 
 phonelist=[]
 phoneline=0
+line=fInput.readline()
 
-
-while 1:
-    line=fp.readline()
+while line:
     phoneline+=1 
-    if not line:
-        break
-    if phoneline not in blacklistlines:
+    if phoneline in blacklistlines:
+        line=fInput.readline()
+        continue
+    extract_phone(line)
+    line=fInput.readline()
 
-        i=0
-        while i!=len(line):
-            if line[i].isdigit()==1:
-                j=1
-                test=1
-                while j!=10:
-                    if line[i+j].isdigit()!=1:
-                        test=0
-                        break
-                    j=j+1
-                if test==1:
-                    phone=line[i:len(line)]
-                    #fp2.write('\t{"Phone Number": "' + phone[:-1] + '"},\n]')
-                    phonelist.append((phone[:-1]))
-                    blacklistlines.append(phoneline)
-                    break
-            i=i+1
+
+#Details
 
 if len(phonelist)>1:
-        fp2.write('\t"Phone Number": ["' + '", "'.join(phonelist) + '"]\n}')
+        fOutput.write('\t"Phone Number": ["' + '", "'.join(phonelist) + '"]\n}')
 else:
-        fp2.write('\t"Phone Number": "' + '", "'.join(phonelist) + '"\n}')    
-fp.close()    
+        fOutput.write('\t"Phone Number": "' + '", "'.join(phonelist) + '"}\n}')    
+fInput.close()    
         
-fp=open("file.txt","r")
+fInput=open("file.txt","r")
 
-line=fp.readline()
+line=fInput.readline()
 
-line=fp.readline()
+line=fInput.readline()
 linenumber = 1
 o=0
+
 while len(line)>1:
     linenumber += 1
-   
+    fOutput.write('{\n"More_Details:"{\n')
     if linenumber in blacklistlines:
-        line=fp.readline()
+        line=fInput.readline()
    
     else :
         if (line.find(':') is -1):
             o=o+1
-            fp2.write(',\n\t"Detail'+str(o)+'":"'+ line[0:-1] + '"' )
+            fOutput.write('\t"Detail'+str(o)+'":"'+ line[0:-1] + '",\n' )
         else:
             tmp = line.find(':')
-            fp2.write(',\n\t"' + line[0:tmp] + '": "' + line[tmp+1:-1] + '"' )
-        line=fp.readline()
-    
-fp2.write('\n}\n')
+            fOutput.write('\t"' + line[0:tmp] + '": "' + line[tmp+1:-1] + '",\n' )
+        line=fInput.readline()
+    fOutput.write('}\n}')    
+
 linenumber += 1
 
 while 1:
-    line=fp.readline()
+    line=fInput.readline()
     linenumber += 1
     
     if linenumber in blacklistlines:
         continue
     
     k=0
-    while len(line)==1 and k<10:#k is for checking infinite loop
-        line=fp.readline()
+    while len(line)==1 and k<1000:#k is for checking infinite loop
+        line=fInput.readline()
         linenumber += 1
         k=k+1
 
     if linenumber in blacklistlines:
         continue    
 
-    if k==10:
+    if k==1000:
         break
     if not line:
         break
-    
-    fp2.write('{\n')
-    fp2.write('\t"'+line[0:-1]+'":[\n')
-    line=fp.readline()
+    j=0
+    k=0
+    while (line[k]==' 'or line[k]=='\t'):
+        if j==1000:
+            print 'blank resume'
+            fOutput.write('\t{"Blank":"Blank"}\n]}')
+            break
+        if k==len(line):
+            j=j+1
+            k=-1
+            line=fInput.readline()
+            linenumber += 1
+        k=k+1 
+    if j==1000:
+        break
+    k=0
+    fOutput.write('{\n')
+    fOutput.write('\t"'+line[0:-1]+'":[\n')
+    line=fInput.readline()
     linenumber += 1
     
     if linenumber in blacklistlines:
         continue
 
     k=0
-    while len(line)==1 and k<5:#k is for checking infinite loop
-        line=fp.readline()
+    while len(line)==1 and k<1000:#k is for checking infinite loop
+        line=fInput.readline()
         linenumber += 1
     
         if linenumber in blacklistlines:
@@ -185,21 +175,30 @@ while 1:
     if linenumber in blacklistlines:
         continue    
 
-    if k==5:
+    if k==1000:
         print 'blank resume'
-        fp2.write('\t{"Blank":"Blank"}\n]}')
+        fOutput.write('\t{"Blank":"Blank"}\n]}')
         break
     k=0
     j=0
+    if not line:
+        break
     p=ord(line[0])
     while not((p>=65 and p<=90)or(p>=97 and p<=122)or(p>=48 and p<=57)):#check infinite loop of k
-        if j>5:
+        if k==len(line):
+            j=j+1
+            line=fInput.readline()
+            if linenumber in blacklistlines:
+                continue    
+            k=-1
+            linenumber += 1
+        if j>1000:
             print 'blank resume'
-            fp2.write('\t{"Blank":"Blank"}\n]}')
+            fOutput.write('\t{"Blank":"Blank"}\n]}')
             break
         if line[k]=='\n':
             j=j+1
-            line=fp.readline()
+            line=fInput.readline()
             linenumber += 1
             
             if linenumber in blacklistlines:
@@ -208,14 +207,13 @@ while 1:
             k=-1
         k=k+1
         p=ord(line[k])
-
+    if j>1000:
+        break
     if linenumber in blacklistlines:
         continue    
     
-    if j>5:
-        break
-    fp2.write('\t{"Detail1":"'+line[k:-1])
-    line=fp.readline()
+    fOutput.write('\t{"Detail1":"'+line[k:-1])
+    line=fInput.readline()
     linenumber += 1
 
     if linenumber in blacklistlines:
@@ -224,12 +222,12 @@ while 1:
     k=0
     o=1
     while 1:
-        if ((line[k]==' 'or line[k]=='\t')and k<5 and k<len(line)):
+        if ((line[k]==' 'or line[k]=='\t')and k<1000 and k<len(line)):
             k=k+1
         p=ord(line[k])           
         if p>=97 and p<=122:
-            fp2.write(' '+line[k:-1])
-            line=fp.readline()
+            fOutput.write(' '+line[k:-1])
+            line=fInput.readline()
             linenumber += 1
         
             if linenumber in blacklistlines:
@@ -238,25 +236,25 @@ while 1:
             k=0
             continue
         k=0
-        while k<len(line) and k<10:
+        while k<len(line) and k<1000:
             p=ord(line[k])              
             if (p>=65 and p<=90)or(p>=97 and p<=122)or(p>=48 and p<=57):
                 break
             else:
                 k=k+1
-        if k==10 or k==len(line):
-            fp2.write('"}\n]}\n')
+        if k==1000 or k==len(line):
+            fOutput.write('"}\n]}\n')
             break
         else:
             #o=o+1
-            #fp2.write('"},\n\t{"Detail'+str(o)+'":"'+line[k:-1])
+            #fOutput.write('"},\n\t{"Detail'+str(o)+'":"'+line[k:-1])
             if (line[k:-1].find(':') is -1):
                 o=o+1
-                fp2.write('"},\n\t{"Detail'+str(o)+'":"'+ line[k:-1])
+                fOutput.write('"},\n\t{"Detail'+str(o)+'":"'+ line[k:-1])
             else:
                 tmp = line[k:-1].find(':')
-                fp2.write('"},\n\t{"' + line[k:tmp] + '": "' + line[tmp+1:-1])
-            line=fp.readline()
+                fOutput.write('"},\n\t{"' + line[k:tmp] + '": "' + line[tmp+1:-1])
+            line=fInput.readline()
             linenumber += 1
         
             if linenumber in blacklistlines:
@@ -264,5 +262,5 @@ while 1:
 
             k=0  
                 
-fp.close()
-fp2.close()
+fInput.close()
+fOutput.close()
