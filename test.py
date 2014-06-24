@@ -1,30 +1,24 @@
-#-------------------------------------------------------------------------------
-# Name:        module1
-# Purpose:
-#
-# Author:      Hemu
-#
-# Created:     12/04/2014
-# Copyright:   (c) Hemu 2014
-# Licence:     <your licence>
-#-------------------------------------------------------------------------------
+# Author:  Ajay,Hemant,Naga Varun,Pratik,Pranav    
+# Name:	RESUME PARSER
+# Purpose: INTERNSHIP
+# Created:  24/06/2014
+
 import string
 import subprocess
-from subprocess import call
-#import pdf2txt
 import fileinput
+from subprocess import call
 from modules import *
 
-w=raw_input()
-if w[-1]=='f':
-	subprocess.call('python pdf2txt.py '+w+' > file.txt', shell=True)
-	#pdf2txt.main({w})
-elif w[-1]=='c':
-	subprocess.call('lowriter --convert-to pdf '+w, shell=True)
-	subprocess.call('python pdf2txt.py '+w[:-3]+'pdf > file.txt', shell=True)
-	#pdf2txt.main({w[:-3]+'pdf'})
+fileName = raw_input()
+
+if (fileName[-1] == 'f'):
+	subprocess.call('python pdf2txt.py '+fileName+' > file.txt', shell = True)
+elif fileName[-1]=='c':
+	subprocess.call('lowriter --convert-to pdf '+fileName, shell = True)
+	subprocess.call('python pdf2txt.py '+fileName[:-3]+'pdf > file.txt', shell = True)
+
 else:
-	subprocess.call('cp '+w+' file.txt', shell=True)
+	subprocess.call('cp '+fileName+' file.txt', shell = True)
 
 def main():
     pass
@@ -36,27 +30,30 @@ if __name__ == '__main__':
     
 blacklistlines = [1]
     
-fInput=open("file.txt","r")
-fOutput=open("out.json","w")
+fInput = open("file.txt","r")
+fOutput = open("out.json","fileName")
 fOutput.write('{\n')
 
 #Name extraction
 
-line=fInput.readline()
+line = fInput.readline()
 fOutput.write('"Basic Details": {\n')
 fOutput.write('\t"Name": "' + line[:-1] + '",\n')
 
 
 #Email Extraction
-emailline=1
-emaillist=[]
 
-line=fInput.readline()
+emailline = 1
+emaillist = []
+
+line = fInput.readline()
+
 while line:
-    emailline+=1
+    emailline = emailline + 1
     email = extract_email(line)
-        emaillist.append(email)
-        blacklistlines.append(emailline)
+    if email is not None:
+    	emaillist.append(email) 
+    	blacklistlines.append(emailline)
     line=fInput.readline()
 
 if len(emaillist)>1:
@@ -67,118 +64,133 @@ fInput.close()
 
 
 
-#Phone number extraction
+#Phone Number Extraction
 
-fInput=open("file.txt","r")
+fInput = open("file.txt","r")
 
-phonelist=[]
-phoneline=0
-line=fInput.readline()
+phonelist = []
+phoneline = 0
+line = fInput.readline()
 
 while line:
-    phoneline+=1 
+    phoneline = phoneline + 1 
     if phoneline in blacklistlines:
-        line=fInput.readline()
+        line = fInput.readline()
         continue
-    extract_phone(line)
+    phone = extract_phone(line)
+    if phone is not None:
+    	phonelist.append(phone)
+    	blacklistlines.append(phoneline)
     line=fInput.readline()
 
 
-#Details
+#Basic Details Extraction
 
 if len(phonelist)>1:
         fOutput.write('\t"Phone Number": ["' + '", "'.join(phonelist) + '"]\n}')
 else:
-        fOutput.write('\t"Phone Number": "' + '", "'.join(phonelist) + '"}\n}')    
+        fOutput.write('\t"Phone Number": "' + '", "'.join(phonelist) + '"\n}')    
+
 fInput.close()    
         
-fInput=open("file.txt","r")
+fInput = open("file.txt","r")
 
-line=fInput.readline()
+line = fInput.readline()
 
-line=fInput.readline()
-linenumber = 1
-o=0
+line = fInput.readline()
+linenumber = 2
 
-while len(line)>1:
-    linenumber += 1
-    fOutput.write('{\n"More_Details:"{\n')
+detailNumber = 1
+
+#More Details Extraction
+
+fOutput.write('\n"More Details:"{\n')
+
+while (len(line)>1):
     if linenumber in blacklistlines:
-        line=fInput.readline()
+        line = fInput.readline()
    
     else :
         if (line.find(':') is -1):
-            o=o+1
-            fOutput.write('\t"Detail'+str(o)+'":"'+ line[0:-1] + '",\n' )
+        	fOutput.write('\t"Detail'+str(detailNumber)+'":"'+ line[0:-1] + '",\n' )
+        	detailNumber = detailNumber + 1
         else:
-            tmp = line.find(':')
-            fOutput.write('\t"' + line[0:tmp] + '": "' + line[tmp+1:-1] + '",\n' )
-        line=fInput.readline()
-    fOutput.write('}\n}')    
+            indexOfColon = line.find(':')
+            fOutput.write('\t"' + line[0:indexOfColon] + '": "' + line[indexOfColon + 1:-1] + '",\n' )
+        line = fInput.readline()
+        
+    linenumber = linenumber + 1
 
-linenumber += 1
+fOutput.write('}\n')    
+
+
 
 while 1:
-    line=fInput.readline()
-    linenumber += 1
+    line = fInput.readline()
+    linenumber = linenumber + 1
     
     if linenumber in blacklistlines:
         continue
     
-    k=0
-    while len(line)==1 and k<1000:#k is for checking infinite loop
-        line=fInput.readline()
-        linenumber += 1
-        k=k+1
+    numberOfBlankLines = 0
+    
+    while (len(line)==1 and numberOfBlankLines<1000): #numberOfBlankLines is for checking infinite loop
+        line = fInput.readline()
+        linenumber = linenumber + 1
+        numberOfBlankLines = numberOfBlankLines + 1
 
-    if linenumber in blacklistlines:
+    if (linenumber in blacklistlines):
         continue    
 
-    if k==1000:
+    if (numberOfBlankLines is 1000):
         break
+        
     if not line:
         break
-    j=0
-    k=0
-    while (line[k]==' 'or line[k]=='\t'):
-        if j==1000:
-            print 'blank resume'
+    
+    numberOfBlankLines = 0
+    index = 0
+    
+    while (line[index] == ' ' or line[index] is '\t'):
+        if numberOfBlankLines is 1000:
             fOutput.write('\t{"Blank":"Blank"}\n]}')
             break
-        if k==len(line):
-            j=j+1
-            k=-1
+        
+        if index==len(line):
+            numberOfBlankLines = numberOfBlankLines + 1
+            index = -1
             line=fInput.readline()
-            linenumber += 1
-        k=k+1 
-    if j==1000:
+            linenumber = linenumber + 1
+        index = index + 1 
+    
+    if numberOfBlankLines is 1000:
         break
-    k=0
+    
+    numberOfBlankLines = 0
+    
     fOutput.write('{\n')
-    fOutput.write('\t"'+line[0:-1]+'":[\n')
-    line=fInput.readline()
-    linenumber += 1
+    fOutput.write('\t"' + line[0:-1] + '":[\n')
+    
+    line = fInput.readline()
+    linenumber = linenumber + 1
     
     if linenumber in blacklistlines:
         continue
 
-    k=0
-    while len(line)==1 and k<1000:#k is for checking infinite loop
-        line=fInput.readline()
-        linenumber += 1
+    numberOfBlankLines = 0
     
-        if linenumber in blacklistlines:
-            continue
-
-        k=k+1
+    while (len(line) == 1 and numberOfBlankLines < 1000):  #numberOfBlankLines is for checking infinite loop
+        line=fInput.readline()
+        linenumber = linenumber + 1
+        numberOfBlankLines = numberOfBlankLines + 1
 
     if linenumber in blacklistlines:
         continue    
 
-    if k==1000:
-        print 'blank resume'
+    if numberOfBlankLines == 1000:
         fOutput.write('\t{"Blank":"Blank"}\n]}')
         break
+    
     k=0
     j=0
     if not line:
@@ -220,7 +232,7 @@ while 1:
         continue
 
     k=0
-    o=1
+    detailNumber=1
     while 1:
         if ((line[k]==' 'or line[k]=='\t')and k<1000 and k<len(line)):
             k=k+1
@@ -246,11 +258,11 @@ while 1:
             fOutput.write('"}\n]}\n')
             break
         else:
-            #o=o+1
-            #fOutput.write('"},\n\t{"Detail'+str(o)+'":"'+line[k:-1])
+            #detailNumber=detailNumber+1
+            #fOutput.write('"},\n\t{"Detail'+str(detailNumber)+'":"'+line[k:-1])
             if (line[k:-1].find(':') is -1):
-                o=o+1
-                fOutput.write('"},\n\t{"Detail'+str(o)+'":"'+ line[k:-1])
+                detailNumber=detailNumber+1
+                fOutput.write('"},\n\t{"Detail'+str(detailNumber)+'":"'+ line[k:-1])
             else:
                 tmp = line[k:-1].find(':')
                 fOutput.write('"},\n\t{"' + line[k:tmp] + '": "' + line[tmp+1:-1])

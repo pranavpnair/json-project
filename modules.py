@@ -8,13 +8,13 @@ def extract_email(line):
         while line[left]!=' ' and left is not 0:
             left-=1
         right=i
-        while line[right]!=' ' and right is not len(line):
+        while right is not len(line) and line[right]!=' ':
             right+=1
         
         if len(line) >= right-1 and (line[right-1].isalpha() or line[right-1].isdigit()):
             right +=1
         
-        return line[left:right-1].trim()
+        return line[left:right-1].strip()
     
     else: return None
     
@@ -33,7 +33,7 @@ def extract_phone(line):
             if test is 1:
                 phone=line[i:len(line)]
                 #fOutput.write('\t{"Phone Number": "' + phone[:-1] + '"},\n]')
-                return phone[:-1].trim()
+                return phone[:-1].strip()
         i=i+1
     
     return None
